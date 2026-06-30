@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>Gold Avenue – Extension Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: linear-gradient(135deg, #0a0806 0%, #1a1510 40%, #0d0b08 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ===== MATRIX HEAVY RAIN CANVAS ===== */
+    #matrixCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ===== THUNDER FLASH OVERLAY ===== */
+    #thunderOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: rgba(255, 220, 120, 0);
+      transition: background 0.05s ease;
+    }
+
+    #thunderOverlay.flash {
+      background: rgba(255, 220, 120, 0.15);
+    }
+
+    #thunderOverlay.flash-strong {
+      background: rgba(255, 220, 120, 0.30);
+    }
+
+    /* gold glow overlay on rain */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255, 208, 40, 0.02) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* MAIN POPUP */
+    .popup {
+      max-width: 560px;
+      width: 100%;
+      background: rgba(98, 83, 41, 0.35);
+      backdrop-filter: blur(32px) saturate(180%);
+      -webkit-backdrop-filter: blur(32px) saturate(180%);
+      border-radius: 40px;
+      padding: 32px 28px 36px;
+      border: 1px solid rgba(190, 160, 80, 0.15);
+      box-shadow: 0 0 100px rgba(255, 210, 40, 0.03), 0 25px 60px rgba(0, 0, 0, 0.70), inset 0 1px 0 rgba(255, 220, 120, 0.04);
+      transition: all 0.3s ease;
+      color: #F2F2F2;
+      position: relative;
+      z-index: 1;
+      animation: popupFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes popupFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .popup::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 40px;
+      padding: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 208, 40, 0.08), rgba(255, 208, 40, 0.18), rgba(255, 208, 40, 0.08), transparent);
+      background-size: 400% 100%;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: shineBorder 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shineBorder {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .popup::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      right: -50%;
+      bottom: -50%;
+      background: radial-gradient(ellipse at center, rgba(255, 208, 40, 0.015) 0%, transparent 70%);
+      pointer-events: none;
+      animation: glowPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.05); }
+    }
+
+    /* language selector */
+    .lang-selector {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    .lang-btn {
+      background: rgba(63, 53, 27, 0.20);
+      border: 1px solid rgba(168, 137, 61, 0.12);
+      color: #B6AA92;
+      padding: 10px 18px;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(8px);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.3px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .lang-btn i {
+      font-size: 1rem;
+      color: #BB9E4C;
+    }
+
+    .lang-btn.active {
+      background: rgba(187, 158, 76, 0.10);
+      border-color: #BB9E4C;
+      color: #FFD84D;
+      box-shadow: 0 0 40px rgba(255, 208, 40, 0.03), inset 0 0 40px rgba(255, 208, 40, 0.01);
+    }
+
+    .lang-btn:active { transform: scale(0.96); }
+
+    /* form elements */
+    .form-group {
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 2;
+    }
+
+    label {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #B6AA92;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    label i {
+      margin-right: 8px;
+      color: #BB9E4C;
+      font-size: 0.75rem;
+    }
+
+    select,
+    input,
+    textarea {
+      width: 100%;
+      padding: 14px 18px;
+      background: rgba(63, 53, 27, 0.15);
+      border: 1px solid rgba(168, 137, 61, 0.10);
+      border-radius: 18px;
+      font-size: 0.95rem;
+      color: #F2F2F2;
+      backdrop-filter: blur(8px);
+      transition: 0.3s;
+      outline: none;
+      font-weight: 500;
+    }
+
+    select option {
+      background: #1a1510;
+      color: #F2F2F2;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      border-color: #BB9E4C;
+      box-shadow: 0 0 0 3px rgba(187, 158, 76, 0.05), inset 0 0 40px rgba(255, 208, 40, 0.01);
+      background: rgba(63, 53, 27, 0.25);
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23BB9E4C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 18px center;
+    }
+
+    textarea { resize: vertical; min-height: 70px; }
+
+    .row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* extension type */
+    .ext-type-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .ext-option {
+      flex: 1 0 calc(50% - 10px);
+      background: rgba(63, 53, 27, 0.12);
+      border: 1px solid rgba(168, 137, 61, 0.06);
+      border-radius: 20px;
+      padding: 14px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ext-option::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      right: -50%;
+      bottom: -50%;
+      background: radial-gradient(ellipse at center, rgba(255, 208, 40, 0.015) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .ext-option:hover::before { opacity: 1; }
+
+    .ext-option .title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #F2F2F2;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ext-option .sub {
+      font-size: 0.7rem;
+      color: #B6AA92;
+      margin-top: 3px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ext-option .badge-free {
+      color: #FFD84D;
+      font-weight: 700;
+      text-shadow: 0 0 20px rgba(255, 208, 40, 0.04);
+    }
+
+    .ext-option.selected {
+      border-color: #BB9E4C;
+      background: rgba(187, 158, 76, 0.05);
+      box-shadow: 0 0 50px rgba(255, 208, 40, 0.02), inset 0 0 50px rgba(255, 208, 40, 0.01);
+    }
+
+    .ext-option.selected .title {
+      color: #FFD84D;
+      text-shadow: 0 0 20px rgba(255, 208, 40, 0.04);
+    }
+
+    .ext-option:active { transform: scale(0.97); }
+
+    /* paid calendar */
+    .paid-calendar {
+      background: rgba(63, 53, 27, 0.08);
+      border-radius: 20px;
+      padding: 14px 16px;
+      margin: 12px 0 6px;
+      border: 1px solid rgba(168, 137, 61, 0.04);
+      backdrop-filter: blur(8px);
+    }
+
+    .paid-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .paid-row input[type="date"] {
+      width: auto;
+      flex: 1;
+      min-width: 140px;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 40px;
+      padding: 10px 16px;
+      border-color: rgba(168, 137, 61, 0.06);
+      color: #F2F2F2;
+    }
+
+    .paid-row input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.8) sepia(1) saturate(2) hue-rotate(10deg);
+    }
+
+    .calc-display {
+      background: rgba(187, 158, 76, 0.03);
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-weight: 700;
+      color: #FFD84D;
+      border: 1px solid rgba(187, 158, 76, 0.05);
+      font-size: 1rem;
+      text-shadow: 0 0 20px rgba(255, 208, 40, 0.03);
+      letter-spacing: 0.5px;
+    }
+
+    /* submit */
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #8A6C22, #C9A63B, #FFD84D, #C89C2C, #8A6C22);
+      background-size: 300% 100%;
+      border: none;
+      padding: 18px;
+      border-radius: 60px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #1A1712;
+      margin-top: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 30px rgba(187, 158, 76, 0.08);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      animation: goldShimmer 6s linear infinite;
+      position: relative;
+      z-index: 2;
+    }
+
+    @keyframes goldShimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    .submit-btn:active { transform: scale(0.97); }
+    .submit-btn:disabled { opacity: 0.5; transform: none; animation: none; }
+
+    /* lock message */
+    .lock-message {
+      background: rgba(187, 158, 76, 0.02);
+      border-left: 3px solid #FFD84D;
+      padding: 14px 18px;
+      border-radius: 16px;
+      margin: 14px 0 10px;
+      font-size: 0.85rem;
+      color: #F2F2F2;
+      display: none;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(168, 137, 61, 0.03);
+    }
+
+    .lock-message .countdown {
+      color: #FFD84D;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-top: 8px;
+      text-shadow: 0 0 20px rgba(255, 208, 40, 0.03);
+    }
+
+    /* success overlay */
+    .success-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 8, 6, 0.45);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 999;
+    }
+
+    .success-card {
+      max-width: 480px;
+      width: 100%;
+      background: rgba(98, 83, 41, 0.30);
+      backdrop-filter: blur(36px);
+      -webkit-backdrop-filter: blur(36px);
+      border-radius: 44px;
+      padding: 36px 30px 32px;
+      border: 1px solid rgba(190, 160, 80, 0.08);
+      box-shadow: 0 0 120px rgba(255, 210, 40, 0.015), 0 30px 70px rgba(0, 0, 0, 0.50);
+      color: #F2F2F2;
+      animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .success-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 44px;
+      padding: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 208, 40, 0.05), rgba(255, 208, 40, 0.10), rgba(255, 208, 40, 0.05), transparent);
+      background-size: 400% 100%;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: shineBorder 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes fadeUp {
+      0% { opacity: 0; transform: translateY(40px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .success-card h2 {
+      color: #FFD84D;
+      margin-bottom: 22px;
+      font-weight: 700;
+      font-size: 1.5rem;
+      text-shadow: 0 0 30px rgba(255, 208, 40, 0.03);
+      position: relative;
+      z-index: 1;
+    }
+
+    .success-card .ref-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(168, 137, 61, 0.04);
+      position: relative;
+      z-index: 1;
+    }
+
+    .success-card .ref-row:last-child { border: none; }
+    .success-card .label { color: #B6AA92; font-weight: 500; font-size: 0.85rem; }
+    .success-card .value { font-weight: 600; color: #F2F2F2; }
+    .success-card .value.gold { color: #FFD84D; }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .action-btn {
+      background: rgba(63, 53, 27, 0.15);
+      border: 1px solid rgba(168, 137, 61, 0.06);
+      padding: 12px 20px;
+      border-radius: 60px;
+      color: #F2F2F2;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      flex: 1 0 auto;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .action-btn i { color: #BB9E4C; }
+    .action-btn.contact { background: rgba(187, 158, 76, 0.03); border-color: rgba(187, 158, 76, 0.08); }
+    .action-btn.contact i { color: #FFD84D; }
+    .action-btn:active { transform: scale(0.96); }
+
+    .close-success {
+      background: transparent;
+      border: none;
+      color: #B6AA92;
+      font-size: 1.8rem;
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+      z-index: 2;
+    }
+    .close-success:hover { color: #FFD84D; }
+
+    /* mini topup */
+    .mini-topup {
+      display: none;
+      margin-top: 20px;
+      padding: 18px 20px;
+      background: rgba(187, 158, 76, 0.015);
+      border-radius: 24px;
+      border: 1px solid rgba(190, 160, 80, 0.04);
+      backdrop-filter: blur(8px);
+      position: relative;
+      z-index: 2;
+      animation: fadeUp 0.4s ease;
+    }
+
+    .mini-topup.visible { display: block; }
+
+    .mini-topup .topup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .mini-topup .topup-header .badge {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-weight: 700;
+    }
+
+    .badge-success { background: rgba(0, 200, 120, 0.06); color: #7ddfb0; border: 1px solid rgba(0, 200, 120, 0.05); }
+    .badge-warning { background: rgba(255, 208, 40, 0.04); color: #FFD84D; border: 1px solid rgba(255, 208, 40, 0.04); }
+    .badge-info { background: rgba(100, 150, 255, 0.03); color: #8ab4ff; border: 1px solid rgba(100, 150, 255, 0.03); }
+
+    .mini-topup .topup-ref {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #FFD84D;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 20px rgba(255, 208, 40, 0.02);
+    }
+
+    .mini-topup .topup-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+      margin-top: 8px;
+    }
+
+    .mini-topup .topup-details span {
+      font-size: 0.8rem;
+      color: #B6AA92;
+    }
+
+    .mini-topup .topup-details strong {
+      color: #F2F2F2;
+      font-weight: 600;
+    }
+
+    .mini-topup .topup-download {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mini-topup .topup-download button {
+      background: rgba(63, 53, 27, 0.10);
+      border: 1px solid rgba(168, 137, 61, 0.04);
+      padding: 8px 18px;
+      border-radius: 40px;
+      color: #F2F2F2;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: 0.2s;
+      backdrop-filter: blur(8px);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-topup .topup-download button i { color: #BB9E4C; }
+    .mini-topup .topup-download button:hover { background: rgba(187, 158, 76, 0.04); }
+
+    @media (max-width: 480px) {
+      .popup { padding: 22px 16px 26px; }
+      .row-2col { grid-template-columns: 1fr; gap: 0; }
+      .ext-option { flex: 1 0 100%; }
+      .lang-btn { font-size: 0.75rem; padding: 8px 14px; }
+      .success-card { padding: 28px 18px 24px; }
+      .mini-topup .topup-details { grid-template-columns: 1fr; }
+    }
+
+    .gold-text { color: #FFD84D; text-shadow: 0 0 20px rgba(255, 208, 40, 0.03); }
+
+    /* cloud font effect */
+    .cloud-text {
+      display: inline-block;
+      animation: cloudFloat 4s ease-in-out infinite;
+      font-weight: 700;
+    }
+
+    @keyframes cloudFloat {
+      0%, 100% { transform: translateY(0px) scale(1); opacity: 1; }
+      50% { transform: translateY(-2px) scale(1.02); opacity: 0.9; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MATRIX HEAVY RAIN CANVAS -->
+  <canvas id="matrixCanvas"></canvas>
+
+  <!-- THUNDER FLASH OVERLAY -->
+  <div id="thunderOverlay"></div>
+
+  <div class="popup" id="mainPopup">
+
+    <!-- LANGUAGE -->
+    <div class="lang-selector" id="langSelector">
+      <button class="lang-btn active" data-lang="en"><i class="fas fa-globe"></i> English</button>
+      <button class="lang-btn" data-lang="si"><i class="fas fa-flag"></i> සිංහල</button>
+      <button class="lang-btn" data-lang="ta"><i class="fas fa-flag"></i> தமிழ்</button>
+    </div>
+
+    <!-- FORM -->
+    <form id="extensionForm">
+      <div class="form-group">
+        <label for="inviteCode"><i class="fas fa-key"></i> <span data-i18n="inviteLabel">Invite Code</span> <span class="gold-text">*</span></label>
+        <select id="inviteCode" required>
+          <option value="">— select —</option>
+          <option value="K3L8P5R1">K3L8P5R1</option>
+          <option value="M4V7W2X9">M4V7W2X9</option>
+          <option value="R5T9N3Q7">R5T9N3Q7</option>
+          <option value="C7H4J9L3">C7H4J9L3</option>
+          <option value="Z8W2Y5V1">Z8W2Y5V1</option>
+          <option value="N9Q3R6T2">N9Q3R6T2</option>
+          <option value="X4K8M1P7">X4K8M1P7</option>
+          <option value="A7B9C2D4">A7B9C2D4</option>
+        </select>
+      </div>
+
+      <div class="lock-message" id="lockMessage">
+        <i class="fas fa-lock" style="margin-right:8px;"></i> <strong data-i18n="lockTitle">Agent Extension Already Active</strong><br />
+        <span data-i18n="lockDesc">This Invite Code has already received a free 72‑hour extension. You may submit another free request after the remaining countdown expires or choose a Paid Extension.</span>
+        <div class="countdown"><i class="fas fa-hourglass-half"></i> <span id="remainingDisplay">--</span></div>
+      </div>
+
+      <div class="row-2col">
+        <div class="form-group">
+          <label for="custName"><i class="fas fa-user"></i> <span data-i18n="nameLabel">Customer Name</span> *</label>
+          <input type="text" id="custName" required placeholder="e.g. A. Perera" />
+        </div>
+        <div class="form-group">
+          <label for="custEmail"><i class="fas fa-envelope"></i> <span data-i18n="emailLabel">Registered Email</span> *</label>
+          <input type="email" id="custEmail" required placeholder="email@domain.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="custMobile"><i class="fas fa-phone-alt"></i> <span data-i18n="mobileLabel">Registered Mobile</span> *</label>
+        <input type="tel" id="custMobile" required placeholder="+94 77 123 4567" />
+      </div>
+
+      <div class="form-group">
+        <label><i class="fas fa-clock"></i> <span data-i18n="extTypeLabel">Extension Type</span> *</label>
+        <div class="ext-type-group" id="extTypeGroup">
+          <div class="ext-option" data-type="agent" data-duration="72 Hours">
+            <div class="title">Agent Extension</div>
+            <div class="sub">72 Hours · <span class="badge-free">FREE</span></div>
+          </div>
+          <div class="ext-option" data-type="admin" data-duration="168 Hours (7 Days)">
+            <div class="title">Administrator Extension</div>
+            <div class="sub">168 Hours · <span class="badge-free">FREE</span></div>
+          </div>
+          <div class="ext-option" data-type="paid" data-duration="Paid">
+            <div class="title">Paid Extension</div>
+            <div class="sub">LKR 10,000 / day</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="paid-calendar" id="paidCalendar" style="display:none;">
+        <div class="paid-row">
+          <label style="margin:0; text-transform:none; letter-spacing:0.4px; font-weight:600; font-size:0.8rem; color:#B6AA92;">
+            <i class="fas fa-calendar-day"></i> <span data-i18n="dateLabel">Select Date</span>
+          </label>
+          <input type="date" id="extDate" />
+          <span class="calc-display" id="paymentDisplay">LKR 0</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="reason"><i class="fas fa-pencil-alt"></i> <span data-i18n="reasonLabel">Reason for Extension</span> *</label>
+        <textarea id="reason" required placeholder="Brief reason..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <i class="fas fa-paper-plane" style="margin-right:10px;"></i>
+        <span data-i18n="submitBtn">Submit Request</span>
+      </button>
+    </form>
+
+    <!-- MINI TOPUP -->
+    <div class="mini-topup" id="miniTopup">
+      <div class="topup-header">
+        <span class="topup-ref" id="miniRef">EXT-20260701-548712</span>
+        <span class="badge badge-warning" id="miniBadge">Pending Verification</span>
+      </div>
+      <div class="topup-details">
+        <span><strong data-i18n="inviteLabel">Invite Code</strong>: <span id="miniInvite">K3L8P5R1</span></span>
+        <span><strong data-i18n="extTypeLabel">Extension</strong>: <span id="miniType">Agent Extension</span></span>
+        <span><strong data-i18n="durationLabel">Duration</strong>: <span id="miniDuration">72 Hours</span></span>
+        <span><strong>Status</strong>: <span style="color:#FFD84D;" id="miniStatus">Pending</span></span>
+      </div>
+      <div class="topup-download">
+        <button id="miniPdf"><i class="fas fa-file-pdf"></i> <span data-i18n="pdfBtn">Download PDF</span></button>
+        <button id="miniScreenshot"><i class="fas fa-camera"></i> <span data-i18n="screenshotBtn">Screenshot</span></button>
+        <button id="miniContact" class="contact" style="border-color:rgba(187,158,76,0.08);"><i class="fas fa-headset"></i> <span data-i18n="contactBtn">Contact</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS OVERLAY -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+      <button class="close-success" id="closeSuccess"><i class="fas fa-times-circle"></i></button>
+      <h2><i class="fas fa-check-circle" style="color:#FFD84D; margin-right:12px;"></i> <span data-i18n="successTitle">Extension Requested</span></h2>
+      <div class="ref-row"><span class="label"><i class="fas fa-hashtag" style="color:#BB9E4C; margin-right:6px;"></i> <span data-i18n="refLabel">Reference</span></span><span class="value gold" id="refNumber">EXT-20260701-548712</span></div>
+      <div class="ref-row"><span class="label"><i class="fas fa-key" style="color:#BB9E4C; margin-right:6px;"></i> <span data-i18n="inviteLabel">Invite Code</span></span><span class="value" id="successInvite">K3L8P5R1</span></div>
+      <div class="ref-row"><span class="label"><i class="fas fa-clock" style="color:#BB9E4C; margin-right:6px;"></i> <span data-i18n="extTypeLabel">Extension Type</span></span><span class="value" id="successExtType">Agent Extension</span></div>
+      <div class="ref-row"><span class="label"><i class="fas fa-hourglass-half" style="color:#BB9E4C; margin-right:6px;"></i> <span data-i18n="durationLabel">Duration</span></span><span class="value" id="successDuration">72 Hours</span></div>
+      <div class="ref-row"><span class="label"><i class="fas fa-info-circle" style="color:#BB9E4C; margin-right:6px;"></i> <span data-i18n="statusLabel">Status</span></span><span class="value gold" style="color:#FFD84D;">Pending Verification</span></div>
+      <div class="action-buttons">
+        <button class="action-btn" id="downloadPdf"><i class="fas fa-file-pdf"></i> <span data-i18n="pdfBtn">Download PDF</span></button>
+        <button class="action-btn" id="saveScreenshot"><i class="fas fa-camera"></i> <span data-i18n="screenshotBtn">Save Screenshot</span></button>
+        <button class="action-btn contact" id="contactService"><i class="fas fa-headset"></i> <span data-i18n="contactBtn">Contact Customer Service</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== HEAVY MATRIX RAIN WITH THUNDER =====
+    (function heavyRainWithThunder() {
+      const canvas = document.getElementById('matrixCanvas');
+      const ctx = canvas.getContext('2d');
+      const thunderOverlay = document.getElementById('thunderOverlay');
+
+      let width, height, columns, drops, fontSize = 16;
+      let rainIntensity = 1.0;
+
+      // Multi-language character set
+      const chars = [];
+      for (let i = 33; i < 127; i++) chars.push(String.fromCharCode(i));
+      for (let i = 0x0D80; i <= 0x0DFF; i++) chars.push(String.fromCodePoint(i));
+      for (let i = 0x0B80; i <= 0x0BFF; i++) chars.push(String.fromCodePoint(i));
+
+      function init() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        // More columns = heavier rain
+        columns = Math.floor(width / fontSize) + 10;
+        drops = [];
+        for (let i = 0; i < columns; i++) {
+          drops[i] = {
+            y: Math.floor(Math.random() * -200),
+            speed: 2 + Math.random() * 6,
+            charIndex: Math.floor(Math.random() * chars.length),
+            brightness: 0.3 + Math.random() * 0.7,
+            size: fontSize * (0.8 + Math.random() * 0.4),
+          };
+        }
+      }
+
+      // Thunder flash system
+      let thunderTimer = 0;
+      let flashIntensity = 0;
+      let flashDuration = 0;
+
+      function triggerThunder() {
+        flashIntensity = Math.random() > 0.6 ? 2 : 1;
+        flashDuration = 80 + Math.random() * 120;
+        thunderOverlay.classList.remove('flash', 'flash-strong');
+        // Force reflow
+        void thunderOverlay.offsetWidth;
+        if (flashIntensity === 2) {
+          thunderOverlay.classList.add('flash-strong');
+        } else {
+          thunderOverlay.classList.add('flash');
+        }
+        setTimeout(() => {
+          thunderOverlay.classList.remove('flash', 'flash-strong');
+        }, flashDuration);
+      }
+
+      function draw() {
+        // Dark trailing effect for heavy rain
+        ctx.fillStyle = 'rgba(10, 8, 6, 0.035)';
+        ctx.fillRect(0, 0, width, height);
+
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, 'rgba(255, 208, 40, 0.20)');
+        gradient.addColorStop(0.3, 'rgba(187, 158, 76, 0.35)');
+        gradient.addColorStop(0.7, 'rgba(255, 208, 40, 0.30)');
+        gradient.addColorStop(1, 'rgba(139, 108, 34, 0.20)');
+
+        for (let i = 0; i < drops.length; i++) {
+          const drop = drops[i];
+          const char = chars[drop.charIndex];
+          const x = i * fontSize + (i % 3) * 2;
+          const y = drop.y * fontSize * 0.5;
+
+          // Glow and brightness
+          const brightness = drop.brightness * (0.6 + Math.random() * 0.4);
+          const alpha = 0.06 + brightness * 0.18;
+          ctx.font = drop.size + 'px "JetBrains Mono", "Segoe UI", monospace';
+          ctx.fillStyle = `rgba(255, 208, 40, ${alpha})`;
+          ctx.shadowColor = `rgba(255, 208, 40, ${0.01 + brightness * 0.03})`;
+          ctx.shadowBlur = 10 + brightness * 15;
+          ctx.fillText(char, x, y);
+
+          // Occasional bright drop
+          if (Math.random() < 0.008) {
+            ctx.fillStyle = `rgba(255, 216, 80, 0.25)`;
+            ctx.shadowBlur = 30;
+            ctx.fillText(char, x, y);
+          }
+
+          // Move drop - faster for heavier rain
+          drop.y += drop.speed * 0.5;
+
+          // Reset drop with new random char
+          if (drop.y * fontSize * 0.5 > height + 50) {
+            drop.y = Math.floor(Math.random() * -30);
+            drop.charIndex = Math.floor(Math.random() * chars.length);
+            drop.speed = 2 + Math.random() * 7;
+            drop.brightness = 0.3 + Math.random() * 0.7;
+            drop.size = fontSize * (0.8 + Math.random() * 0.4);
+          }
+        }
+
+        // Reset shadow
+        ctx.shadowBlur = 0;
+
+        // Thunder logic - random lightning strikes
+        thunderTimer += 16;
+        if (thunderTimer > 3000 + Math.random() * 4000) {
+          thunderTimer = 0;
+          if (Math.random() < 0.3) {
+            triggerThunder();
+            // Sometimes double flash
+            if (Math.random() < 0.3) {
+              setTimeout(() => {
+                triggerThunder();
+              }, 150 + Math.random() * 200);
+            }
+          }
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', () => { init(); });
+
+      init();
+      draw();
+
+      // Also trigger thunder on user interaction for dramatic effect
+      document.addEventListener('click', () => {
+        if (Math.random() < 0.1) triggerThunder();
+      });
+    })();
+
+    // ===== PORTAL LOGIC =====
+    (function() {
+      "use strict";
+
+      const state = {
+        lang: 'en',
+        selectedExt: null,
+        lockEnd: null,
+        lockTimerInterval: null,
+        lastSubmission: null,
+      };
+
+      const i18n = {
+        en: {
+          inviteLabel: 'Invite Code', nameLabel: 'Customer Name', emailLabel: 'Registered Email',
+          mobileLabel: 'Registered Mobile', extTypeLabel: 'Extension Type', dateLabel: 'Select Date',
+          reasonLabel: 'Reason for Extension', submitBtn: 'Submit Request',
+          successTitle: 'Extension Requested', refLabel: 'Reference', durationLabel: 'Duration',
+          statusLabel: 'Status', pdfBtn: 'Download PDF', screenshotBtn: 'Screenshot',
+          contactBtn: 'Contact', lockTitle: 'Agent Extension Already Active',
+          lockDesc: 'This Invite Code has already received a free 72‑hour extension. You may submit another free request after the remaining countdown expires or choose a Paid Extension.'
+        },
+        si: {
+          inviteLabel: 'ආරාධනා කේතය', nameLabel: 'පාරිභෝගික නම', emailLabel: 'ලියාපදිංචි විද්‍යුත් තැපෑල',
+          mobileLabel: 'ලියාපදිංචි ජංගම දුරකථනය', extTypeLabel: 'දීර්ඝ කිරීමේ වර්ගය', dateLabel: 'දිනය තෝරන්න',
+          reasonLabel: 'දීර්ඝ කිරීමට හේතුව', submitBtn: 'ඉල්ලීම යොමු කරන්න',
+          successTitle: 'දීර්ඝ කිරීම ඉල්ලා ඇත', refLabel: 'යොමුව', durationLabel: 'කාලය',
+          statusLabel: 'තත්ත්වය', pdfBtn: 'PDF බාගන්න', screenshotBtn: 'තිර රුව',
+          contactBtn: 'අමතන්න', lockTitle: 'නියෝජිත දීර්ඝ කිරීම දැනටමත් සක්‍රියයි',
+          lockDesc: 'මෙම ආරාධනා කේතය සඳහා පැය 72 ක නිදහස් දීර්ඝ කිරීමක් ලැබී ඇත. ඉතිරි කාලය අවසන් වූ පසු හෝ ගෙවන දීර්ඝ කිරීමක් තෝරාගෙන නව ඉල්ලීමක් යොමු කළ හැක.'
+        },
+        ta: {
+          inviteLabel: 'அழைப்புக் குறியீடு', nameLabel: 'வாடிக்கையாளர் பெயர்', emailLabel: 'பதிவுசெய்யப்பட்ட மின்னஞ்சல்',
+          mobileLabel: 'பதிவுசெய்யப்பட்ட கைபேசி', extTypeLabel: 'நீட்டிப்பு வகை', dateLabel: 'தேதியைத் தேர்ந்தெடுக்கவும்',
+          reasonLabel: 'நீட்டிப்பிற்கான காரணம்', submitBtn: 'கோரிக்கையை சமர்ப்பிக்கவும்',
+          successTitle: 'நீட்டிப்பு கோரப்பட்டது', refLabel: 'குறிப்பு', durationLabel: 'காலம்',
+          statusLabel: 'நிலை', pdfBtn: 'PDF பதிவிறக்கவும்', screenshotBtn: 'திரைப்பிடிப்பு',
+          contactBtn: 'தொடர்பு', lockTitle: 'முகவர் நீட்டிப்பு ஏற்கனவே செயலில் உள்ளது',
+          lockDesc: 'இந்த அழைப்புக் குறியீடு ஏற்கனவே 72 மணி நேர இலவச நீட்டிப்பைப் பெற்றுள்ளது. மீதமுள்ள நேரம் முடிவடைந்த பிறகு அல்லது கட்டண நீட்டிப்பைத் தேர்வுசெய்து மற்றொரு இலவச கோரிக்கையை சமர்ப்பிக்கலாம்.'
+        }
+      };
+
+      // DOM
+      const langBtns = document.querySelectorAll('.lang-btn');
+      const form = document.getElementById('extensionForm');
+      const inviteSelect = document.getElementById('inviteCode');
+      const lockMsg = document.getElementById('lockMessage');
+      const remainingSpan = document.getElementById('remainingDisplay');
+      const extOptions = document.querySelectorAll('.ext-option');
+      const paidCalendar = document.getElementById('paidCalendar');
+      const extDate = document.getElementById('extDate');
+      const paymentDisplay = document.getElementById('paymentDisplay');
+      const submitBtn = document.getElementById('submitBtn');
+      const successOverlay = document.getElementById('successOverlay');
+      const closeSuccess = document.getElementById('closeSuccess');
+      const refNumberSpan = document.getElementById('refNumber');
+      const successInviteSpan = document.getElementById('successInvite');
+      const successExtTypeSpan = document.getElementById('successExtType');
+      const successDurationSpan = document.getElementById('successDuration');
+
+      const miniTopup = document.getElementById('miniTopup');
+      const miniRef = document.getElementById('miniRef');
+      const miniInvite = document.getElementById('miniInvite');
+      const miniType = document.getElementById('miniType');
+      const miniDuration = document.getElementById('miniDuration');
+      const miniStatus = document.getElementById('miniStatus');
+      const miniBadge = document.getElementById('miniBadge');
+
+      function updateLanguage(lang) {
+        state.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.dataset.i18n;
+          if (i18n[lang] && i18n[lang][key]) el.innerText = i18n[lang][key];
+        });
+        langBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+      }
+
+      langBtns.forEach(btn => btn.addEventListener('click', function() { updateLanguage(this.dataset.lang); }));
+
+      extOptions.forEach(opt => {
+        opt.addEventListener('click', function() {
+          extOptions.forEach(o => o.classList.remove('selected'));
+          this.classList.add('selected');
+          state.selectedExt = this.dataset.type;
+          if (state.selectedExt === 'paid') {
+            paidCalendar.style.display = 'block';
+            calcPayment();
+          } else {
+            paidCalendar.style.display = 'none';
+            paymentDisplay.innerText = 'LKR 0';
+          }
+          if (state.selectedExt !== 'agent') {
+            lockMsg.style.display = 'none';
+          } else {
+            checkLockAndDisplay();
+          }
+        });
+      });
+
+      function calcPayment() {
+        const dateVal = extDate.value;
+        if (!dateVal || state.selectedExt !== 'paid') {
+          paymentDisplay.innerText = 'LKR 0';
+          return;
+        }
+        const diffDays = Math.ceil((new Date(dateVal) - new Date()) / (1000 * 60 * 60 * 24));
+        const days = Math.max(1, diffDays);
+        paymentDisplay.innerText = `LKR ${(days * 10000).toLocaleString()}`;
+      }
+      extDate.addEventListener('change', calcPayment);
+
+      function getLockKey(code) { return `gold_lock_${code}`; }
+
+      function getLockEnd(code) {
+        const stored = localStorage.getItem(getLockKey(code));
+        if (!stored) return null;
+        const end = parseInt(stored, 10);
+        if (isNaN(end) || end <= Date.now()) {
+          localStorage.removeItem(getLockKey(code));
+          return null;
+        }
+        return end;
+      }
+
+      function setLock(code, durationMs = 72 * 60 * 60 * 1000) {
+        const end = Date.now() + durationMs;
+        localStorage.setItem(getLockKey(code), String(end));
+        return end;
+      }
+
+      function isLocked(code) { return getLockEnd(code) !== null; }
+
+      function checkLockAndDisplay() {
+        const code = inviteSelect.value;
+        if (!code) { lockMsg.style.display = 'none'; return; }
+        if (state.selectedExt === 'agent') {
+          const end = getLockEnd(code);
+          if (end) {
+            lockMsg.style.display = 'block';
+            startCountdown(end);
+          } else {
+            lockMsg.style.display = 'none';
+            clearInterval(state.lockTimerInterval);
+          }
+        } else {
+          lockMsg.style.display = 'none';
+          clearInterval(state.lockTimerInterval);
+        }
+      }
+
+      function startCountdown(end) {
+        clearInterval(state.lockTimerInterval);
+        state.lockTimerInterval = setInterval(() => {
+          const diff = end - Date.now();
+          if (diff <= 0) {
+            clearInterval(state.lockTimerInterval);
+            remainingSpan.innerText = '0 Hours 0 Minutes';
+            lockMsg.style.display = 'none';
+            const code = inviteSelect.value;
+            if (code) localStorage.removeItem(getLockKey(code));
+            return;
+          }
+          const hours = Math.floor(diff / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          remainingSpan.innerText = `${hours} Hours ${minutes} Minutes`;
+        }, 10000);
+        const diff = end - Date.now();
+        if (diff > 0) {
+          const hours = Math.floor(diff / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          remainingSpan.innerText = `${hours} Hours ${minutes} Minutes`;
+        }
+      }
+
+      inviteSelect.addEventListener('change', checkLockAndDisplay);
+      window.addEventListener('load', function() {
+        if (inviteSelect.value) checkLockAndDisplay();
+        extDate.min = new Date().toISOString().split('T')[0];
+      });
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const code = inviteSelect.value;
+        if (!code) { alert('Please select an Invite Code.'); return; }
+        if (!state.selectedExt) { alert('Please select an Extension Type.'); return; }
+        const name = document.getElementById('custName').value.trim();
+        const email = document.getElementById('custEmail').value.trim();
+        const mobile = document.getElementById('custMobile').value.trim();
+        const reason = document.getElementById('reason').value.trim();
+        if (!name || !email || !mobile || !reason) { alert('Please fill all required fields.'); return; }
+
+        if (state.selectedExt === 'agent') {
+          if (isLocked(code)) {
+            alert('This Invite Code is locked for 72 hours. Please choose another code or Paid Extension.');
+            return;
+          }
+          setLock(code);
+          checkLockAndDisplay();
+        }
+
+        const extTypeMap = { agent: 'Agent Extension', admin: 'Administrator Extension', paid: 'Paid Extension' };
+        const durationMap = { agent: '72 Hours', admin: '168 Hours (7 Days)', paid: 'Paid (LKR 10,000/day)' };
+        const extType = extTypeMap[state.selectedExt] || 'Extension';
+        let duration = durationMap[state.selectedExt] || '—';
+        if (state.selectedExt === 'paid' && extDate.value) {
+          const days = Math.ceil((new Date(extDate.value) - new Date()) / (1000 * 60 * 60 * 24));
+          duration = `${Math.max(1, days)} Day(s) · LKR ${(Math.max(1, days) * 10000).toLocaleString()}`;
+        }
+
+        const now = new Date();
+        const ymd = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+        const rand = Math.floor(100000 + Math.random() * 900000);
+        const ref = `EXT-${ymd}-${rand}`;
+
+        refNumberSpan.innerText = ref;
+        successInviteSpan.innerText = code;
+        successExtTypeSpan.innerText = extType;
+        successDurationSpan.innerText = duration;
+
+        miniRef.innerText = ref;
+        miniInvite.innerText = code;
+        miniType.innerText = extType;
+        miniDuration.innerText = duration;
+        miniStatus.innerText = 'Pending';
+        miniBadge.innerText = 'Pending Verification';
+        miniBadge.className = 'badge badge-warning';
+
+        miniTopup.classList.add('visible');
+        successOverlay.style.display = 'flex';
+        state.lastSubmission = { ref, code, extType, duration };
+      });
+
+      closeSuccess.addEventListener('click', function() { successOverlay.style.display = 'none'; });
+      successOverlay.addEventListener('click', function(e) { if (e.target === this) successOverlay.style.display = 'none'; });
+
+      function handlePdf() {
+        const ref = state.lastSubmission?.ref || 'EXT-000000-000000';
+        alert(`📄 PDF Download: ${ref}\n(Simulated PDF generation with Extension details)`);
+      }
+
+      function handleScreenshot() {
+        alert('📸 Screenshot simulation. (Use native screenshot or library)');
+      }
+
+      function handleContact() {
+        window.open('https://t.me/goldavenueoffcial', '_blank');
+      }
+
+      document.getElementById('downloadPdf').addEventListener('click', handlePdf);
+      document.getElementById('saveScreenshot').addEventListener('click', handleScreenshot);
+      document.getElementById('contactService').addEventListener('click', handleContact);
+
+      document.getElementById('miniPdf').addEventListener('click', handlePdf);
+      document.getElementById('miniScreenshot').addEventListener('click', handleScreenshot);
+      document.getElementById('miniContact').addEventListener('click', handleContact);
+
+      updateLanguage('en');
+    })();
+  </script>
+</body>
+</html>
