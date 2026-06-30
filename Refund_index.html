@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blueprint Neon · Refund & Audit</title>
+  <!-- Font Awesome 6 (free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* ─── RESET & BASE ─── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #e8edf5;
+      background-image: 
+        radial-gradient(ellipse at 15% 30%, rgba(0, 80, 160, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 70%, rgba(0, 80, 160, 0.04) 0%, transparent 50%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      position: relative;
+      overflow-x: hidden;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* ─── LIGHT NAVY BLUE FRONT DROP ─── */
+    .front-drop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(0, 60, 120, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(0, 60, 120, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(0, 80, 160, 0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEAVY RAIN EFFECT ─── */
+    .rain-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .rain-drop {
+      position: absolute;
+      top: -30px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(0, 100, 200, 0.3), rgba(0, 100, 200, 0.01));
+      animation: rainFall linear infinite;
+      border-radius: 2px;
+    }
+
+    .rain-drop:nth-child(odd) {
+      width: 3px;
+      background: linear-gradient(180deg, rgba(0, 100, 200, 0.25), rgba(0, 100, 200, 0.008));
+    }
+
+    .rain-drop:nth-child(3n) {
+      width: 1.5px;
+      background: linear-gradient(180deg, rgba(0, 100, 200, 0.35), rgba(0, 100, 200, 0.015));
+    }
+
+    @keyframes rainFall {
+      0% {
+        transform: translateY(-30px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(110vh) rotate(0deg);
+        opacity: 0;
+      }
+    }
+
+    /* ─── WELCOME SCREEN ─── */
+    .welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10000;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .welcome-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.05);
+    }
+
+    .welcome-content {
+      text-align: center;
+      max-width: 650px;
+      padding: 2rem;
+      animation: fadeInDown 0.8s ease forwards;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .welcome-content .logo-icon {
+      font-size: 5rem;
+      color: #1a3a5c;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 0 60px rgba(0, 60, 120, 0.1);
+      display: block;
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .welcome-content h1 {
+      font-size: 3.8rem;
+      font-weight: 800;
+      color: #1a3a5c;
+      text-shadow: 0 2px 20px rgba(0, 50, 100, 0.06);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .welcome-content .subtitle {
+      color: rgba(26, 58, 92, 0.4);
+      font-size: 1.1rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+    }
+
+    .welcome-content .divider-line {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #1a3a5c, transparent);
+      margin: 0 auto 2.5rem auto;
+      border-radius: 4px;
+    }
+
+    .welcome-content p {
+      color: rgba(26, 58, 92, 0.3);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    .lang-buttons {
+      display: flex;
+      gap: 1.2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .lang-btn {
+      background: rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(26, 58, 92, 0.08);
+      padding: 1.2rem 2.8rem;
+      border-radius: 18px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: rgba(26, 58, 92, 0.4);
+      cursor: pointer;
+      transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      font-family: 'Inter', sans-serif;
+      min-width: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    }
+
+    .lang-btn:hover {
+      background: rgba(255, 255, 255, 0.55);
+      border-color: rgba(26, 58, 92, 0.15);
+      color: #1a3a5c;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0, 60, 120, 0.06);
+    }
+
+    .lang-btn i {
+      opacity: 0.5;
+      font-size: 1.3rem;
+    }
+
+    .lang-btn.active {
+      background: rgba(255, 255, 255, 0.65);
+      border-color: rgba(26, 58, 92, 0.2);
+      color: #1a3a5c;
+    }
+
+    .welcome-footer {
+      margin-top: 3rem;
+      color: rgba(26, 58, 92, 0.08);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* ─── MAIN CARD ─── */
+    .form-card {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(248, 250, 255, 0.25));
+      max-width: 920px;
+      width: 100%;
+      border-radius: 32px;
+      padding: 3.2rem 3.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.04),
+        0 0 40px rgba(0, 60, 120, 0.02),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      transition: 0.4s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-card:hover {
+      border-color: rgba(255, 255, 255, 0.45);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.06), 0 0 60px rgba(0, 60, 120, 0.03);
+    }
+
+    @media (max-width: 640px) {
+      .form-card {
+        padding: 2rem 1.5rem;
+        border-radius: 24px;
+      }
+    }
+
+    /* ─── HEADER ─── */
+    .form-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 2rem;
+      padding-bottom: 1.6rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      position: relative;
+    }
+
+    .form-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #1a3a5c, transparent);
+      border-radius: 4px;
+    }
+
+    .form-header .icon-wrap {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 18px;
+      padding: 16px 20px;
+      color: #1a3a5c;
+      font-size: 2.4rem;
+      text-shadow: 0 0 30px rgba(0, 60, 120, 0.04);
+      box-shadow: inset 0 0 20px rgba(0, 60, 120, 0.01);
+      line-height: 1;
+    }
+
+    .form-header .header-text {
+      flex: 1;
+    }
+
+    .form-header h2 {
+      font-weight: 800;
+      font-size: 2.6rem;
+      letter-spacing: -0.02em;
+      color: #1a3a5c;
+      text-shadow: 0 2px 20px rgba(0, 50, 100, 0.04);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.2;
+    }
+
+    .form-header h2 small {
+      display: block;
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: rgba(26, 58, 92, 0.3);
+      letter-spacing: 0.3em;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .header-badge {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.5rem 1.6rem;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      color: rgba(26, 58, 92, 0.2);
+      letter-spacing: 0.2em;
+      font-weight: 700;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-badge i {
+      color: rgba(26, 58, 92, 0.1);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.25), transparent);
+      margin-bottom: 2.4rem;
+    }
+
+    /* ─── FORM ELEMENTS ─── */
+    .form-group {
+      margin-bottom: 2rem;
+      animation: slideUp 0.6s ease forwards;
+      opacity: 0;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.05s; }
+    .form-group:nth-child(2) { animation-delay: 0.1s; }
+    .form-group:nth-child(3) { animation-delay: 0.15s; }
+    .form-group:nth-child(4) { animation-delay: 0.2s; }
+    .form-group:nth-child(5) { animation-delay: 0.25s; }
+    .form-group:nth-child(6) { animation-delay: 0.3s; }
+    .form-group:nth-child(7) { animation-delay: 0.35s; }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: rgba(26, 58, 92, 0.5);
+      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+    }
+
+    label i {
+      color: rgba(26, 58, 92, 0.2);
+      font-size: 0.9rem;
+      width: 1.4rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper .field-icon {
+      position: absolute;
+      left: 18px;
+      color: rgba(26, 58, 92, 0.15);
+      font-size: 1.1rem;
+      pointer-events: none;
+      transition: 0.2s;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 1rem 1.2rem 1rem 3.5rem;
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      font-size: 1.15rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      font-family: 'Inter', sans-serif;
+      color: #1a2a3a;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.01);
+    }
+
+    select {
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%231a3a5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+      background-repeat: no-repeat;
+      background-position: right 1.4rem center;
+      background-size: 1.2rem;
+      padding-right: 3.5rem;
+      cursor: pointer;
+    }
+
+    select option {
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a2a3a;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
+
+    textarea {
+      padding: 1rem 1.2rem 1rem 1.4rem;
+      min-height: 100px;
+      resize: vertical;
+      font-weight: 500;
+    }
+
+    .textarea-group .input-wrapper .field-icon {
+      top: 18px;
+      left: 18px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: rgba(26, 58, 92, 0.2);
+      background: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 30px rgba(0, 60, 120, 0.04), inset 0 2px 8px rgba(0, 0, 0, 0.01);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: rgba(26, 58, 92, 0.12);
+      font-weight: 400;
+    }
+
+    .row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    @media (max-width: 550px) {
+      .row-2col {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+      }
+    }
+
+    /* ─── AUDIT FILE ─── */
+    .audit-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .audit-wrapper input {
+      flex: 1;
+      padding-right: 1rem;
+      background: rgba(255, 255, 255, 0.25);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      font-family: 'Inter', monospace;
+      font-size: 1.15rem;
+    }
+
+    .btn-generate {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 1rem 2rem;
+      font-weight: 700;
+      color: #1a3a5c;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      transition: 0.25s;
+      white-space: nowrap;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+    }
+
+    .btn-generate i {
+      color: rgba(26, 58, 92, 0.3);
+      font-size: 1rem;
+    }
+
+    .btn-generate:hover {
+      background: rgba(255, 255, 255, 0.45);
+      border-color: rgba(26, 58, 92, 0.1);
+      box-shadow: 0 8px 30px rgba(0, 60, 120, 0.04);
+      transform: translateY(-1px);
+    }
+
+    /* ─── AMOUNT FIELD ─── */
+    .amount-input {
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      font-size: 1.2rem;
+    }
+
+    /* ─── CHECKBOX ─── */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 1.6rem 0 2.2rem 0;
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 0.9rem 1.8rem;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideUp 0.6s ease 0.4s forwards;
+      opacity: 0;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      accent-color: #1a3a5c;
+      padding: 0;
+      margin: 0;
+      border-radius: 6px;
+      flex-shrink: 0;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.3);
+      border: 1.5px solid rgba(26, 58, 92, 0.1);
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      color: rgba(26, 58, 92, 0.5);
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0.02em;
+      backdrop-filter: none;
+    }
+
+    .checkbox-group label i {
+      color: rgba(26, 58, 92, 0.15);
+    }
+
+    .checkbox-group .sync-badge {
+      font-size: 0.7rem;
+      color: rgba(26, 58, 92, 0.08);
+      margin-left: auto;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+
+    /* ─── FLOATING BUTTONS ─── */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.2rem;
+      margin-top: 2.2rem;
+      animation: slideUp 0.6s ease 0.45s forwards;
+      opacity: 0;
+    }
+
+    .btn {
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 1.1rem 2.6rem;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #1a3a5c;
+      cursor: pointer;
+      transition: 0.3s;
+      flex: 1 1 auto;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .btn:nth-child(1) { animation-delay: 0s; }
+    .btn:nth-child(2) { animation-delay: 0.5s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .btn-primary {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.35);
+      flex: 2 1 auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    }
+
+    .btn-primary:hover {
+      background: rgba(255, 255, 255, 0.5);
+      border-color: rgba(26, 58, 92, 0.1);
+      box-shadow: 0 8px 30px rgba(0, 60, 120, 0.04);
+      transform: translateY(-4px);
+      animation-play-state: paused;
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-4px);
+      animation-play-state: paused;
+    }
+
+    .btn i {
+      opacity: 0.4;
+      font-size: 1.05rem;
+    }
+
+    .btn-primary i {
+      opacity: 0.5;
+    }
+
+    /* ─── FLOATING DOWNLOAD PDF ─── */
+    .download-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.4rem;
+      animation: slideUp 0.6s ease 0.5s forwards;
+      opacity: 0;
+    }
+
+    .btn-download-pdf {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      padding: 1rem 2.8rem;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      color: #1a3a5c;
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+      animation: float 3s ease-in-out infinite 0.3s;
+    }
+
+    .btn-download-pdf i {
+      font-size: 1.2rem;
+      opacity: 0.4;
+    }
+
+    .btn-download-pdf:hover {
+      background: rgba(255, 255, 255, 0.45);
+      border-color: rgba(26, 58, 92, 0.08);
+      box-shadow: 0 8px 30px rgba(0, 60, 120, 0.04);
+      transform: translateY(-4px);
+      animation-play-state: paused;
+    }
+
+    /* ─── FLOATING TELEGRAM ─── */
+    .telegram-wrap {
+      margin-top: 0.8rem;
+      display: flex;
+      justify-content: flex-end;
+      animation: slideUp 0.6s ease 0.55s forwards;
+      opacity: 0;
+    }
+
+    .btn-telegram {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      color: rgba(26, 58, 92, 0.25);
+      padding: 0.6rem 2rem;
+      border-radius: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      transition: 0.3s;
+      font-size: 0.9rem;
+      animation: float 3s ease-in-out infinite 0.6s;
+    }
+
+    .btn-telegram i {
+      color: rgba(26, 58, 92, 0.15);
+      font-size: 1.2rem;
+    }
+
+    .btn-telegram:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: rgba(26, 58, 92, 0.4);
+      transform: translateY(-4px);
+      animation-play-state: paused;
+    }
+
+    /* ─── STATUS ─── */
+    .status-message {
+      margin-top: 2rem;
+      padding: 1rem 1.8rem;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #1a3a5c;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-left: 4px solid rgba(26, 58, 92, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-left-width: 4px;
+      animation: slideUp 0.6s ease 0.6s forwards;
+      opacity: 0;
+    }
+
+    .status-message i {
+      font-size: 1.4rem;
+      opacity: 0.5;
+    }
+
+    .status-message.success {
+      background: rgba(255, 255, 255, 0.35);
+      border-left-color: #1a3a5c;
+    }
+
+    .hidden { display: none; }
+
+    /* ─── FOOTER ─── */
+    .footnote {
+      margin-top: 2.2rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: rgba(26, 58, 92, 0.08);
+      letter-spacing: 0.2em;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 1.8rem;
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      font-weight: 600;
+      animation: slideUp 0.6s ease 0.65s forwards;
+      opacity: 0;
+    }
+
+    .footnote i {
+      opacity: 0.2;
+      margin: 0 4px;
+    }
+
+    /* ─── PDF POPUP ─── */
+    .pdf-popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .pdf-popup-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .pdf-popup-content {
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 28px;
+      padding: 3rem;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.06), 0 0 60px rgba(0, 60, 120, 0.02);
+      position: relative;
+      animation: popIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .pdf-popup-content .close-popup {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      color: rgba(26, 58, 92, 0.2);
+      font-size: 1.6rem;
+      cursor: pointer;
+      transition: 0.3s;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pdf-popup-content .close-popup:hover {
+      background: rgba(255, 255, 255, 0.5);
+      color: rgba(26, 58, 92, 0.4);
+      transform: rotate(90deg);
+    }
+
+    .pdf-popup-content h3 {
+      color: #1a3a5c;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 1.8rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 1.2rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pdf-popup-content h3 i {
+      opacity: 0.4;
+    }
+
+    .pdf-preview-item {
+      display: flex;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pdf-preview-item .label {
+      color: rgba(26, 58, 92, 0.25);
+      width: 160px;
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+    }
+
+    .pdf-preview-item .value {
+      color: #1a2a3a;
+      word-break: break-word;
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    .popup-actions {
+      display: flex;
+      gap: 1.2rem;
+      margin-top: 2.2rem;
+      justify-content: flex-end;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 1.8rem;
+    }
+
+    .btn-popup-download {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      padding: 1rem 2.6rem;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #1a3a5c;
+      cursor: pointer;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+      animation: float 3s ease-in-out infinite 0.2s;
+    }
+
+    .btn-popup-download:hover {
+      background: rgba(255, 255, 255, 0.5);
+      border-color: rgba(26, 58, 92, 0.08);
+      transform: translateY(-4px);
+      animation-play-state: paused;
+    }
+
+    .btn-popup-close {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      padding: 1rem 2.6rem;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: rgba(26, 58, 92, 0.15);
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+      animation: float 3s ease-in-out infinite 0.1s;
+    }
+
+    .btn-popup-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: rgba(26, 58, 92, 0.3);
+      transform: translateY(-4px);
+      animation-play-state: paused;
+    }
+
+    .pdf-popup-content::-webkit-scrollbar {
+      width: 5px;
+    }
+    .pdf-popup-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .pdf-popup-content::-webkit-scrollbar-thumb {
+      background: rgba(26, 58, 92, 0.06);
+      border-radius: 4px;
+    }
+
+    /* ─── LANGUAGE SWITCHER IN HEADER ─── */
+    .lang-switcher {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    .lang-switcher .lang-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: rgba(26, 58, 92, 0.2);
+      font-size: 0.65rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .lang-switcher .lang-dot:hover {
+      border-color: rgba(26, 58, 92, 0.1);
+      color: rgba(26, 58, 92, 0.4);
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .lang-switcher .lang-dot.active {
+      border-color: rgba(26, 58, 92, 0.15);
+      color: #1a3a5c;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 480px) {
+      .form-header h2 {
+        font-size: 1.8rem;
+      }
+      .header-badge {
+        display: none;
+      }
+      .pdf-popup-content {
+        padding: 1.8rem;
+      }
+      .pdf-preview-item .label {
+        width: 100px;
+        font-size: 0.7rem;
+      }
+      .pdf-preview-item .value {
+        font-size: 0.9rem;
+      }
+      .welcome-content h1 {
+        font-size: 2.6rem;
+      }
+      .lang-btn {
+        padding: 1rem 1.8rem;
+        font-size: 1rem;
+        min-width: 120px;
+      }
+      .lang-switcher .lang-dot {
+        width: 30px;
+        height: 30px;
+        font-size: 0.55rem;
+      }
+      input, select, textarea {
+        font-size: 1rem;
+        padding: 0.9rem 1rem 0.9rem 3rem;
+      }
+      .btn {
+        padding: 0.9rem 1.8rem;
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── LIGHT NAVY BLUE FRONT DROP ─── -->
+<div class="front-drop"></div>
+
+<!-- ─── HEAVY RAIN EFFECT ─── -->
+<div class="rain-container" id="rainContainer"></div>
+
+<!-- ─── WELCOME SCREEN ─── -->
+<div class="welcome-screen" id="welcomeScreen">
+  <div class="welcome-content">
+    <span class="logo-icon"><i class="fas fa-code-branch"></i></span>
+    <h1>Refund · Audit</h1>
+    <div class="subtitle">Blueprint Neon · Finance Division</div>
+    <div class="divider-line"></div>
+    <p>Select your preferred language</p>
+    <div class="lang-buttons">
+      <button class="lang-btn" data-lang="si">
+        <i class="fas fa-language"></i> සිංහල
+      </button>
+      <button class="lang-btn active" data-lang="en">
+        <i class="fas fa-language"></i> English
+      </button>
+      <button class="lang-btn" data-lang="ta">
+        <i class="fas fa-language"></i> தமிழ்
+      </button>
+    </div>
+    <div class="welcome-footer">
+      <i class="fas fa-shield-alt"></i> 0x4E30 · encrypted
+    </div>
+  </div>
+</div>
+
+<!-- ─── PDF POPUP ─── -->
+<div class="pdf-popup-overlay" id="pdfPopup">
+  <div class="pdf-popup-content">
+    <button class="close-popup" id="closePopupBtn"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-file-pdf"></i> <span id="popupTitle">Refund Summary</span></h3>
+    <div id="popupContent"></div>
+    <div class="popup-actions">
+      <button class="btn-popup-close" id="popupCloseBtn"><span id="popupClose">Close</span></button>
+      <button class="btn-popup-download" id="popupDownloadBtn">
+        <i class="fas fa-download"></i> <span id="popupDownload">Download PDF</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MAIN FORM ─── -->
+<div class="form-card" id="mainForm">
+  <div class="form-header">
+    <span class="icon-wrap"><i class="fas fa-code-branch"></i></span>
+    <div class="header-text">
+      <h2 id="formTitle">
+        Refund · Audit
+        <small id="formSubtitle">blueprint neon · finance division</small>
+      </h2>
+    </div>
+    <div class="lang-switcher">
+      <span class="lang-dot" data-lang="si">සි</span>
+      <span class="lang-dot active" data-lang="en">EN</span>
+      <span class="lang-dot" data-lang="ta">த</span>
+    </div>
+    <span class="header-badge"><i class="fas fa-shield-alt"></i> 0x4E30</span>
+  </div>
+  <div class="divider"></div>
+
+  <form id="refundForm" novalidate>
+    <!-- Customer -->
+    <div class="form-group">
+      <label for="fullName"><i class="fas fa-user"></i> <span id="lblFullName">Full name</span></label>
+      <div class="input-wrapper">
+        <i class="fas fa-user field-icon"></i>
+        <input type="text" id="fullName" name="fullName" placeholder="e.g. James Sterling" value="James Sterling" required>
+      </div>
+    </div>
+
+    <div class="row-2col">
+      <div class="form-group">
+        <label for="email"><i class="fas fa-envelope"></i> <span id="lblEmail">Email</span></label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope field-icon"></i>
+          <input type="email" id="email" name="email" placeholder="name@domain.com" value="j.sterling@finance.com" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="phone"><i class="fas fa-phone-alt"></i> <span id="lblPhone">Phone</span></label>
+        <div class="input-wrapper">
+          <i class="fas fa-phone-alt field-icon"></i>
+          <input type="tel" id="phone" name="phone" placeholder="+1 987 654 3210" value="+1 212 555 7890">
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit File -->
+    <div class="form-group">
+      <label for="auditFile"><i class="fas fa-folder-open"></i> <span id="lblAudit">Audit File</span></label>
+      <div class="audit-wrapper">
+        <div class="input-wrapper" style="flex:1;">
+          <i class="fas fa-file-alt field-icon"></i>
+          <input type="text" id="auditFile" name="auditFile" placeholder="AUD-XXXX-XXXX" value="AUD-9472-8F3G" required readonly style="background:rgba(255,255,255,0.15);cursor:default;font-family:'Inter',monospace;">
+        </div>
+        <button type="button" class="btn-generate" id="generateAuditBtn">
+          <i class="fas fa-sync-alt"></i> <span id="lblGenerate">Generate</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Reason -->
+    <div class="form-group">
+      <label for="refundReason"><i class="fas fa-comment-dots"></i> <span id="lblReason">Reason for refund</span></label>
+      <div class="input-wrapper">
+        <i class="fas fa-exclamation-circle field-icon"></i>
+        <select id="refundReason" name="refundReason" required>
+          <option value="Money Arrangement Fail" data-si="මුදල් සැකසීම අසාර්ථකයි" data-ta="பண ஏற்பாடு தோல்வி">Money Arrangement Fail</option>
+          <option value="Bank Holiday" data-si="බැංකු නිවාඩු" data-ta="வங்கி விடுமுறை">Bank Holiday</option>
+          <option value="Bank Too Far" data-si="බැංකුව ඉතා දුර" data-ta="வங்கி மிக தொலைவில்">Bank Too Far</option>
+          <option value="Agent Not Explained" data-si="නියෝජිතයා පැහැදිලි කළේ නැත" data-ta="முகவர் விளக்கவில்லை" selected>Agent Not Explained</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Amount - LKR -->
+    <div class="form-group">
+      <label for="refundAmount"><i class="fas fa-rupee-sign"></i> <span id="lblAmount">Amount (LKR)</span></label>
+      <div class="input-wrapper">
+        <i class="fas fa-rupee-sign field-icon"></i>
+        <input type="number" id="refundAmount" name="refundAmount" placeholder="0.00" value="1250.50" step="0.01" min="0" required class="amount-input">
+      </div>
+    </div>
+
+    <!-- Additional -->
+    <div class="form-group textarea-group">
+      <label for="additionalInfo"><i class="fas fa-align-left"></i> <span id="lblNotes">Additional notes</span></label>
+      <div class="input-wrapper">
+        <i class="fas fa-pencil-alt field-icon"></i>
+        <textarea id="additionalInfo" name="additionalInfo" placeholder="Further details...">Client was not properly briefed on the terms. Requesting full refund.</textarea>
+      </div>
+    </div>
+
+    <!-- Checkbox -->
+    <div class="checkbox-group">
+      <input type="checkbox" id="updateDetails" name="updateDetails" checked>
+      <label for="updateDetails">
+        <i class="fas fa-sync-alt"></i> <span id="lblUpdate">Update my details in the system</span>
+      </label>
+      <span class="sync-badge"><i class="fas fa-database"></i> sync</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button type="reset" class="btn btn-outline"><i class="fas fa-undo-alt"></i> <span id="lblReset">Reset</span></button>
+      <button type="submit" class="btn btn-primary" id="submitBtn">
+        <i class="fas fa-paper-plane"></i> <span id="lblSubmit">Submit</span>
+      </button>
+    </div>
+
+    <!-- Download PDF -->
+    <div class="download-wrap">
+      <button type="button" class="btn-download-pdf" id="previewPdfBtn">
+        <i class="fas fa-file-pdf"></i> <span id="lblPreview">Preview & Download PDF</span>
+      </button>
+    </div>
+
+    <!-- Telegram -->
+    <div class="telegram-wrap">
+      <a href="https://t.me/headquaters_finance" target="_blank" class="btn-telegram" id="telegramLink">
+        <i class="fab fa-telegram-plane"></i> <span id="lblTelegram">finance dept · audit</span>
+      </a>
+    </div>
+
+    <!-- Status -->
+    <div id="statusMessage" class="status-message hidden">
+      <i class="fas fa-check-circle"></i>
+      <span id="statusText">Refund submitted & system updated.</span>
+    </div>
+
+    <div class="footnote">
+      <span><i class="fas fa-shield-alt"></i> 0x4E30 · encrypted</span>
+      <span><i class="fas fa-robot"></i> system sync</span>
+      <span><i class="fas fa-chart-line"></i> audit trail</span>
+    </div>
+  </form>
+</div>
+
+<script>
+  // ─── HEAVY RAIN EFFECT ───
+  (function createRain() {
+    const container = document.getElementById('rainContainer');
+    const dropCount = 200;
+    for (let i = 0; i < dropCount; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'rain-drop';
+      const left = Math.random() * 100;
+      const delay = Math.random() * 4;
+      const duration = 0.7 + Math.random() * 1.4;
+      const height = 15 + Math.random() * 45;
+      const opacity = 0.12 + Math.random() * 0.45;
+      drop.style.left = left + '%';
+      drop.style.animationDuration = duration + 's';
+      drop.style.animationDelay = delay + 's';
+      drop.style.height = height + 'px';
+      drop.style.opacity = opacity;
+      drop.style.width = (1 + Math.random() * 3) + 'px';
+      container.appendChild(drop);
+    }
+  })();
+
+  // ─── LANGUAGE DATA ───
+  const translations = {
+    si: {
+      welcomeTitle: 'Refund · Audit',
+      welcomeSub: 'Blueprint Neon · මූල්ය අංශය',
+      welcomeSelect: 'ඔබගේ කැමති භාෂාව තෝරන්න',
+      formTitle: 'ප්‍රතිපූර්ණ · විගණනය',
+      formSub: 'blueprint neon · මූල්ය අංශය',
+      lblFullName: 'සම්පූර්ණ නම',
+      lblEmail: 'විද්‍යුත් තැපෑල',
+      lblPhone: 'දුරකථනය',
+      lblAudit: 'විගණන ගොනුව',
+      lblGenerate: 'ජනනය කරන්න',
+      lblReason: 'ප්‍රතිපූර්ණ හේතුව',
+      lblAmount: 'මුදල (LKR)',
+      lblNotes: 'අමතර සටහන්',
+      lblUpdate: 'පද්ධතියේ මගේ විස්තර යාවත්කාලීන කරන්න',
+      lblReset: 'යළි සකසන්න',
+      lblSubmit: 'ඉදිරිපත් කරන්න',
+      lblPreview: 'පෙරදසුන සහ PDF බාගන්න',
+      lblTelegram: 'මූල්ය දෙපාර්තමේන්තුව · විගණනය',
+      popupTitle: 'ප්‍රතිපූර්ණ සාරාංශය',
+      popupClose: 'වසන්න',
+      popupDownload: 'PDF බාගන්න',
+      statusSuccess: '✅ ප්‍රතිපූර්ණය ඉදිරිපත් කරන ලදී · පද්ධතිය යාවත්කාලීන කරන ලදී',
+      statusError: '⚠️ කරුණාකර අවශ්‍ය සියලු ක්ෂේත්‍ර පුරවන්න.',
+      statusEmail: '⚠️ කරුණාකර වලංගු විද්‍යුත් තැපෑලක් ඇතුළත් කරන්න.',
+      statusAmount: '⚠️ කරුණාකර වලංගු මුදලක් ඇතුළත් කරන්න.',
+      auditGenerated: '🔄 නව විගණන ගොනුව ජනනය කරන ලදී: ',
+      formReset: '🔄 පෝරමය යළි සකසන ලදී · නව විගණන ගොනුව ජනනය කරන ලදී',
+      pdfDownloaded: '✅ PDF ප්‍රතිපූර්ණ කාඩ්පත සාර්ථකව බාගන්නා ලදී!',
+      reasonOptions: {
+        'Money Arrangement Fail': 'මුදල් සැකසීම අසාර්ථකයි',
+        'Bank Holiday': 'බැංකු නිවාඩු',
+        'Bank Too Far': 'බැංකුව ඉතා දුර',
+        'Agent Not Explained': 'නියෝජිතයා පැහැදිලි කළේ නැත'
+      }
+    },
+    ta: {
+      welcomeTitle: 'Refund · Audit',
+      welcomeSub: 'Blueprint Neon · நிதிப் பிரிவு',
+      welcomeSelect: 'உங்கள் விருப்ப மொழியைத் தேர்ந்தெடுக்கவும்',
+      formTitle: 'பணத்திருப்பம் · தணிக்கை',
+      formSub: 'blueprint neon · நிதிப் பிரிவு',
+      lblFullName: 'முழு பெயர்',
+      lblEmail: 'மின்னஞ்சல்',
+      lblPhone: 'தொலைபேசி',
+      lblAudit: 'தணிக்கை கோப்பு',
+      lblGenerate: 'உருவாக்கு',
+      lblReason: 'பணத்திருப்பத்திற்கான காரணம்',
+      lblAmount: 'தொகை (LKR)',
+      lblNotes: 'கூடுதல் குறிப்புகள்',
+      lblUpdate: 'எனது விவரங்களை கணினியில் புதுப்பிக்கவும்',
+      lblReset: 'மீட்டமை',
+      lblSubmit: 'சமர்ப்பிக்கவும்',
+      lblPreview: 'முன்னோட்டம் & PDF பதிவிறக்கவும்',
+      lblTelegram: 'நிதித் துறை · தணிக்கை',
+      popupTitle: 'பணத்திருப்பம் சுருக்கம்',
+      popupClose: 'மூடு',
+      popupDownload: 'PDF பதிவிறக்கவும்',
+      statusSuccess: '✅ பணத்திருப்பம் சமர்ப்பிக்கப்பட்டது · கணினி புதுப்பிக்கப்பட்டது',
+      statusError: '⚠️ தயவுசெய்து தேவையான அனைத்து புலங்களையும் நிரப்பவும்.',
+      statusEmail: '⚠️ தயவுசெய்து சரியான மின்னஞ்சலை உள்ளிடவும்.',
+      statusAmount: '⚠️ தயவுசெய்து சரியான தொகையை உள்ளிடவும்.',
+      auditGenerated: '🔄 புதிய தணிக்கை கோப்பு உருவாக்கப்பட்டது: ',
+      formReset: '🔄 படிவம் மீட்டமைக்கப்பட்டது · புதிய தணிக்கை கோப்பு உருவாக்கப்பட்டது',
+      pdfDownloaded: '✅ PDF பணத்திருப்பம் அட்டை வெற்றிகரமாக பதிவிறக்கப்பட்டது!',
+      reasonOptions: {
+        'Money Arrangement Fail': 'பண ஏற்பாடு தோல்வி',
+        'Bank Holiday': 'வங்கி விடுமுறை',
+        'Bank Too Far': 'வங்கி மிக தொலைவில்',
+        'Agent Not Explained': 'முகவர் விளக்கவில்லை'
+      }
+    },
+    en: {
+      welcomeTitle: 'Refund · Audit',
+      welcomeSub: 'Blueprint Neon · Finance Division',
+      welcomeSelect: 'Select your preferred language',
+      formTitle: 'Refund · Audit',
+      formSub: 'blueprint neon · finance division',
+      lblFullName: 'Full name',
+      lblEmail: 'Email',
+      lblPhone: 'Phone',
+      lblAudit: 'Audit File',
+      lblGenerate: 'Generate',
+      lblReason: 'Reason for refund',
+      lblAmount: 'Amount (LKR)',
+      lblNotes: 'Additional notes',
+      lblUpdate: 'Update my details in the system',
+      lblReset: 'Reset',
+      lblSubmit: 'Submit',
+      lblPreview: 'Preview & Download PDF',
+      lblTelegram: 'finance dept · audit',
+      popupTitle: 'Refund Summary',
+      popupClose: 'Close',
+      popupDownload: 'Download PDF',
+      statusSuccess: '✅ Refund submitted · system updated',
+      statusError: '⚠️ Please fill in all required fields.',
+      statusEmail: '⚠️ Please enter a valid email address.',
+      statusAmount: '⚠️ Please enter a valid amount.',
+      auditGenerated: '🔄 New audit file generated: ',
+      formReset: '🔄 Form reset · new audit file generated',
+      pdfDownloaded: '✅ PDF Refund Card downloaded successfully!',
+      reasonOptions: {
+        'Money Arrangement Fail': 'Money Arrangement Fail',
+        'Bank Holiday': 'Bank Holiday',
+        'Bank Too Far': 'Bank Too Far',
+        'Agent Not Explained': 'Agent Not Explained'
+      }
+    }
+  };
+
+  // ─── STATE ───
+  let currentLang = 'en';
+
+  // ─── DOM REFS ───
+  const welcomeScreen = document.getElementById('welcomeScreen');
+  const langBtns = document.querySelectorAll('.lang-btn');
+  const langDots = document.querySelectorAll('.lang-dot');
+
+  const translatable = {
+    welcomeTitle: document.querySelector('.welcome-content h1'),
+    welcomeSub: document.querySelector('.welcome-content .subtitle'),
+    welcomeSelect: document.querySelector('.welcome-content p'),
+    formTitle: document.getElementById('formTitle'),
+    formSub: document.getElementById('formSubtitle'),
+    lblFullName: document.getElementById('lblFullName'),
+    lblEmail: document.getElementById('lblEmail'),
+    lblPhone: document.getElementById('lblPhone'),
+    lblAudit: document.getElementById('lblAudit'),
+    lblGenerate: document.getElementById('lblGenerate'),
+    lblReason: document.getElementById('lblReason'),
+    lblAmount: document.getElementById('lblAmount'),
+    lblNotes: document.getElementById('lblNotes'),
+    lblUpdate: document.getElementById('lblUpdate'),
+    lblReset: document.getElementById('lblReset'),
+    lblSubmit: document.getElementById('lblSubmit'),
+    lblPreview: document.getElementById('lblPreview'),
+    lblTelegram: document.getElementById('lblTelegram'),
+    popupTitle: document.getElementById('popupTitle'),
+    popupClose: document.getElementById('popupClose'),
+    popupDownload: document.getElementById('popupDownload')
+  };
+
+  // ─── TRANSLATE FUNCTION ───
+  function applyLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+
+    if (translatable.welcomeTitle) translatable.welcomeTitle.textContent = t.welcomeTitle;
+    if (translatable.welcomeSub) translatable.welcomeSub.textContent = t.welcomeSub;
+    if (translatable.welcomeSelect) translatable.welcomeSelect.textContent = t.welcomeSelect;
+
+    if (translatable.formTitle) {
+      const titleEl = translatable.formTitle;
+      titleEl.childNodes[0].textContent = t.formTitle;
+    }
+    if (translatable.formSub) translatable.formSub.textContent = t.formSub;
+    if (translatable.lblFullName) translatable.lblFullName.textContent = t.lblFullName;
+    if (translatable.lblEmail) translatable.lblEmail.textContent = t.lblEmail;
+    if (translatable.lblPhone) translatable.lblPhone.textContent = t.lblPhone;
+    if (translatable.lblAudit) translatable.lblAudit.textContent = t.lblAudit;
+    if (translatable.lblGenerate) translatable.lblGenerate.textContent = t.lblGenerate;
+    if (translatable.lblReason) translatable.lblReason.textContent = t.lblReason;
+    if (translatable.lblAmount) translatable.lblAmount.textContent = t.lblAmount;
+    if (translatable.lblNotes) translatable.lblNotes.textContent = t.lblNotes;
+    if (translatable.lblUpdate) translatable.lblUpdate.textContent = t.lblUpdate;
+    if (translatable.lblReset) translatable.lblReset.textContent = t.lblReset;
+    if (translatable.lblSubmit) translatable.lblSubmit.textContent = t.lblSubmit;
+    if (translatable.lblPreview) translatable.lblPreview.textContent = t.lblPreview;
+    if (translatable.lblTelegram) translatable.lblTelegram.textContent = t.lblTelegram;
+    if (translatable.popupTitle) translatable.popupTitle.textContent = t.popupTitle;
+    if (translatable.popupClose) translatable.popupClose.textContent = t.popupClose;
+    if (translatable.popupDownload) translatable.popupDownload.textContent = t.popupDownload;
+
+    const reasonSelect = document.getElementById('refundReason');
+    for (let option of reasonSelect.options) {
+      const key = option.value;
+      if (t.reasonOptions && t.reasonOptions[key]) {
+        option.textContent = t.reasonOptions[key];
+      }
+    }
+
+    document.querySelectorAll('.lang-btn, .lang-dot').forEach(el => {
+      el.classList.toggle('active', el.dataset.lang === lang);
+    });
+
+    const placeholders = {
+      en: { name: 'e.g. James Sterling', email: 'name@domain.com', phone: '+1 987 654 3210', amount: '0.00', notes: 'Further details...' },
+      si: { name: 'උදා: ජේම්ස් ස්ටර්ලින්', email: 'name@domain.com', phone: '+1 987 654 3210', amount: '0.00', notes: 'වැඩිදුර විස්තර...' },
+      ta: { name: 'எ.கா: ஜேம்ஸ் ஸ்டெர்லிங்', email: 'name@domain.com', phone: '+1 987 654 3210', amount: '0.00', notes: 'மேலும் விவரங்கள்...' }
+    };
+
+    const fullNameInput = document.getElementById('fullName');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const amountInput = document.getElementById('refundAmount');
+    const notesInput = document.getElementById('additionalInfo');
+
+    if (fullNameInput) fullNameInput.placeholder = placeholders[lang].name;
+    if (emailInput) emailInput.placeholder = placeholders[lang].email;
+    if (phoneInput) phoneInput.placeholder = placeholders[lang].phone;
+    if (amountInput) amountInput.placeholder = placeholders[lang].amount;
+    if (notesInput) notesInput.placeholder = placeholders[lang].notes;
+  }
+
+  // ─── LANGUAGE SELECTION ───
+  function selectLanguage(lang) {
+    applyLanguage(lang);
+    welcomeScreen.classList.add('hidden');
+    setTimeout(() => {
+      welcomeScreen.style.display = 'none';
+    }, 800);
+  }
+
+  langBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      selectLanguage(this.dataset.lang);
+    });
+  });
+
+  langDots.forEach(dot => {
+    dot.addEventListener('click', function() {
+      applyLanguage(this.dataset.lang);
+    });
+  });
+
+  // ─── REST OF FUNCTIONALITY ───
+  const form = document.getElementById('refundForm');
+  const statusDiv = document.getElementById('statusMessage');
+  const statusText = document.getElementById('statusText');
+  const telegramLink = document.getElementById('telegramLink');
+
+  const auditInput = document.getElementById('auditFile');
+  const generateBtn = document.getElementById('generateAuditBtn');
+
+  const popupOverlay = document.getElementById('pdfPopup');
+  const popupContent = document.getElementById('popupContent');
+  const closePopupBtn = document.getElementById('closePopupBtn');
+  const popupCloseBtn = document.getElementById('popupCloseBtn');
+  const popupDownloadBtn = document.getElementById('popupDownloadBtn');
+
+  function generateAuditFile() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let p1 = '', p2 = '';
+    for (let i = 0; i < 4; i++) p1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < 4; i++) p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    return 'AUD-' + p1 + '-' + p2;
+  }
+
+  function getFormValues() {
+    const reasonSelect = document.getElementById('refundReason');
+    return {
+      name: document.getElementById('fullName').value || '—',
+      email: document.getElementById('email').value || '—',
+      phone: document.getElementById('phone').value || '—',
+      audit: document.getElementById('auditFile').value || '—',
+      reason: reasonSelect.options[reasonSelect.selectedIndex]?.text || '—',
+      amount: document.getElementById('refundAmount').value || '0.00',
+      details: document.getElementById('additionalInfo').value || '—',
+      updated: document.getElementById('updateDetails').checked ? 'Yes' : 'No'
+    };
+  }
+
+  function buildPopupContent() {
+    const data = getFormValues();
+    const t = translations[currentLang];
+    const ts = new Date().toLocaleString('en-US', { 
+      year: 'numeric', month: 'short', day: 'numeric', 
+      hour: '2-digit', minute: '2-digit', second: '2-digit' 
+    });
+    const labelMap = {
+      'Full Name': t.lblFullName || 'Full Name',
+      'Email': t.lblEmail || 'Email',
+      'Phone': t.lblPhone || 'Phone',
+      'Audit File': t.lblAudit || 'Audit File',
+      'Reason': t.lblReason || 'Reason',
+      'Amount': t.lblAmount || 'Amount (LKR)',
+      'Additional Notes': t.lblNotes || 'Additional Notes',
+      'System Update': t.lblUpdate || 'System Update',
+      'Timestamp': 'Timestamp'
+    };
+    return `
+      <div class="pdf-preview-item"><span class="label">${labelMap['Full Name']}</span><span class="value">${data.name}</span></div>
+      <div class="pdf-preview-item"><span class="label">${labelMap['Email']}</span><span class="value">${data.email}</span></div>
+      <div class="pdf-preview-item"><span class="label">${labelMap['Phone']}</span><span class="value">${data.phone}</span></div>
+      <div class="pdf-preview-item"><span class="label">${labelMap['Audit File']}</span><span class="value" style="font-family:monospace;letter-spacing:0.05em;">${data.audit}</span></div>
+      <div class="pdf-preview-item"><span class="label">${labelMap['Reason']}</span><span class="value">${data.reason}</span></div>
+      <div class="pdf-preview-item"><span class="label">${labelMap['Amount']}</span><span class="value" style="font-weight:700;color:#1a3a5c;font-size:1.2rem;">LKR ${parseFloat(data.amount).toFixed(2)}</span></div>
+      <div class="pdf-preview-item"><span class="label">${labelMap['Additional Notes']}</span><span class="value">${data.details}</span></div>
+      <div class="pdf-preview-item"><span class="label">${labelMap['System Update']}</span><span class="value">${data.updated}</span></div>
+      <div class="pdf-preview-item" style="border-bottom:none;"><span class="label">${labelMap['Timestamp']}</span><span class="value" style="color:rgba(26,58,92,0.4);font-size:0.9rem;">${ts}</span></div>
+      <div style="margin-top:1.4rem;padding-top:1.4rem;border-top:1px solid rgba(255,255,255,0.15);text-align:center;color:rgba(26,58,92,0.06);font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;font-weight:600;">
+        <i class="fas fa-shield-alt"></i> BLUEPRINT NEON · FINANCE AUDIT 0x4E30
+      </div>
+    `;
+  }
+
+  function showPopup() {
+    popupContent.innerHTML = buildPopupContent();
+    popupOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hidePopup() {
+    popupOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  closePopupBtn.addEventListener('click', hidePopup);
+  popupCloseBtn.addEventListener('click', hidePopup);
+  popupOverlay.addEventListener('click', function(e) {
+    if (e.target === popupOverlay) hidePopup();
+  });
+
+  function generatePDF() {
+    const data = getFormValues();
+    const t = translations[currentLang];
+    const ts = new Date().toLocaleString('en-US', { 
+      year: 'numeric', month: 'short', day: 'numeric', 
+      hour: '2-digit', minute: '2-digit', second: '2-digit' 
+    });
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 58, 92);
+    doc.setFontSize(26);
+    doc.text('REFUND · AUDIT', 20, 30);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 80, 160);
+    doc.text('BLUEPRINT NEON · FINANCE DIVISION', 20, 42);
+    
+    doc.setDrawColor(26, 58, 92, 20);
+    doc.line(20, 48, 190, 48);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(26, 58, 92);
+    doc.setFontSize(12);
+    
+    const labelMap = {
+      'Full Name': t.lblFullName || 'Full Name',
+      'Email': t.lblEmail || 'Email',
+      'Phone': t.lblPhone || 'Phone',
+      'Audit File': t.lblAudit || 'Audit File',
+      'Reason': t.lblReason || 'Reason',
+      'Amount': t.lblAmount || 'Amount (LKR)',
+      'Additional Notes': t.lblNotes || 'Additional Notes',
+      'System Update': t.lblUpdate || 'System Update',
+      'Timestamp': 'Timestamp'
+    };
+    
+    const lines = [
+      [labelMap['Full Name'], data.name],
+      [labelMap['Email'], data.email],
+      [labelMap['Phone'], data.phone],
+      [labelMap['Audit File'], data.audit],
+      [labelMap['Reason'], data.reason],
+      [labelMap['Amount'], 'LKR ' + parseFloat(data.amount).toFixed(2)],
+      [labelMap['Additional Notes'], data.details],
+      [labelMap['System Update'], data.updated],
+      [labelMap['Timestamp'], ts]
+    ];
+    
+    let y = 62;
+    lines.forEach(([label, value]) => {
+      doc.setTextColor(26, 58, 92);
+      doc.setFontSize(9);
+      doc.text(label + ':', 20, y);
+      doc.setTextColor(0, 40, 80);
+      doc.setFontSize(12);
+      const wrapped = doc.splitTextToSize(value, 120);
+      doc.text(wrapped, 65, y);
+      y += 11 + (wrapped.length - 1) * 7;
+    });
+    
+    doc.setTextColor(26, 58, 92, 30);
+    doc.setFontSize(8);
+    doc.text('— — — — — — — — — — — — — — — — — — — — — —', 20, y + 14);
+    doc.text('GENERATED FROM BLUEPRINT NEON REFUND SYSTEM', 20, y + 22);
+    doc.text('0x4E30 · ENCRYPTED · AUDIT TRAIL', 20, y + 30);
+    
+    return doc;
+  }
+
+  document.getElementById('previewPdfBtn').addEventListener('click', showPopup);
+
+  popupDownloadBtn.addEventListener('click', function() {
+    const doc = generatePDF();
+    doc.save('Refund_Blueprint_Neon.pdf');
+    hidePopup();
+    const t = translations[currentLang];
+    showStatus(t.pdfDownloaded || '✅ PDF Refund Card downloaded successfully!', true);
+  });
+
+  window.addEventListener('DOMContentLoaded', function() {
+    auditInput.value = generateAuditFile();
+  });
+
+  generateBtn.addEventListener('click', function() {
+    auditInput.value = generateAuditFile();
+    generateBtn.style.transform = 'scale(0.95)';
+    setTimeout(() => { generateBtn.style.transform = ''; }, 150);
+    const t = translations[currentLang];
+    showStatus(t.auditGenerated + auditInput.value, true);
+  });
+
+  function showStatus(message, isSuccess = true) {
+    statusDiv.classList.remove('hidden', 'success');
+    if (isSuccess) {
+      statusDiv.classList.add('success');
+      statusDiv.querySelector('i').className = 'fas fa-check-circle';
+    } else {
+      statusDiv.classList.remove('success');
+      statusDiv.querySelector('i').className = 'fas fa-exclamation-triangle';
+    }
+    statusText.textContent = message;
+    statusDiv.classList.remove('hidden');
+    clearTimeout(window.statusTimeout);
+    window.statusTimeout = setTimeout(() => {
+      statusDiv.classList.add('hidden');
+    }, 8000);
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const name = formData.get('fullName')?.trim();
+    const email = formData.get('email')?.trim();
+    const audit = formData.get('auditFile')?.trim();
+    const amount = formData.get('refundAmount')?.trim();
+    const t = translations[currentLang];
+
+    if (!name || !email || !audit) {
+      showStatus(t.statusError || '⚠️ Please fill in all required fields.', false);
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      showStatus(t.statusAmount || '⚠️ Please enter a valid amount.', false);
+      return;
+    }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      showStatus(t.statusEmail || '⚠️ Please enter a valid email address.', false);
+      return;
+    }
+
+    const updateChecked = formData.get('updateDetails') === 'on';
+    const msg = `✅ Refund for ${name} · audit ${audit} · LKR ${parseFloat(amount).toFixed(2)}` + (updateChecked ? ' · system updated ✅' : '');
+    showStatus(msg, true);
+    console.log('📋 BLUEPRINT AUDIT:', Object.fromEntries(formData));
+
+    ['fullName', 'email', 'phone', 'auditFile', 'refundAmount'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.transition = 'background 0.3s';
+        el.style.background = 'rgba(26,58,92,0.04)';
+        setTimeout(() => { el.style.background = ''; }, 600);
+      }
+    });
+  });
+
+  form.querySelector('button[type="reset"]').addEventListener('click', function(e) {
+    statusDiv.classList.add('hidden');
+    const t = translations[currentLang];
+    setTimeout(() => {
+      auditInput.value = generateAuditFile();
+      document.getElementById('updateDetails').checked = true;
+      document.getElementById('refundAmount').value = '0.00';
+      showStatus(t.formReset || '🔄 Form reset · new audit file generated', true);
+    }, 30);
+  });
+
+  const allInputs = form.querySelectorAll('input, select, textarea');
+  allInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      if (!statusDiv.classList.contains('hidden')) statusDiv.classList.add('hidden');
+    });
+    input.addEventListener('input', function() {
+      if (!statusDiv.classList.contains('hidden')) statusDiv.classList.add('hidden');
+    });
+  });
+
+  telegramLink.addEventListener('click', function(e) {
+    console.log('📤 Telegram link clicked');
+  });
+
+  statusDiv.classList.add('hidden');
+  applyLanguage('en');
+</script>
+
+</body>
+</html>
